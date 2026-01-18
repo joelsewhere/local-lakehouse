@@ -2,7 +2,6 @@ import os
 import shutil
 from pathlib import Path
 import dotenv 
-from airflow.models import Variable
 
 
 
@@ -20,6 +19,7 @@ class Environment:
             failures.append(failure)
 
         try:
+            from airflow.models import Variable
             return Variable.get(key)
         except Exception as failure:
             failures.append(failure)
@@ -31,7 +31,7 @@ class Environment:
             f'{[str(x) for x in failures]}')
     
 
-STARTER_ENV = Path(__file__).parent / 'env.variables'
+STARTER_ENV = Path(__file__).parent / '.env.variables'
 
 if not Environment.CONFIG_DIR.is_dir():
 
