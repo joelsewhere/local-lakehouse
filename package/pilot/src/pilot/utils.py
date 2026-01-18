@@ -13,15 +13,18 @@ class Environment:
 
     def __getitem__(self, key):
         failures = []
-        try:
-            return Variable.get(key)
-        except Exception as failure:
-            failures.append(failure)
-        
+
         try:
             return os.environ[key]
         except Exception as failure:
             failures.append(failure)
+
+        try:
+            return Variable.get(key)
+        except Exception as failure:
+            failures.append(failure)
+
+
         
         raise KeyError(
             'The following error were thrown '
@@ -46,11 +49,13 @@ else:
         if key not in existing_env.keys()
         }
     
-    with existing_env.open('a') as file:
+    with Environment.ENV.open('a') as file:
         
         for key, value in update_env.items():
 
             file.write(f'{key}="{value}"')
+
+dotenv.load_dotenv(Environment.ENV)
 
 
     

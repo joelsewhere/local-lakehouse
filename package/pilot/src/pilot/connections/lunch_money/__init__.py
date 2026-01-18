@@ -1,6 +1,5 @@
 from pilot.connections.decorators import get, url_factory
 from pilot.utils import Environment
-from typing import Optional
 
 ENV = Environment()
 ROOT = 'https://dev.lunchmoney.app'
@@ -12,14 +11,9 @@ url = url_factory(ROOT, headers=HEADERS)
 
 @get
 @url
-def get_transactions(self, **kwargs) -> dict:
+def get_transactions(*args, **kwargs) -> dict:
     """
     https://lunchmoney.dev/#get-all-transactions
     """
 
     return '/v1/transactions'
-
-
-    
-
-
