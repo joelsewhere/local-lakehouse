@@ -14,7 +14,11 @@ class Environment:
         failures = []
 
         try:
-            return os.environ[key]
+            value = os.environ[key]
+            if value:
+                return value
+            else:
+                failures.append(f'ENV Variable: {key} is not set.')
         except Exception as failure:
             failures.append(failure)
 
