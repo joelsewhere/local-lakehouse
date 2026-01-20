@@ -19,12 +19,14 @@ class Environment:
                 return value
             else:
                 failures.append(f'ENV Variable: {key} is not set.')
+
         except Exception as failure:
             failures.append(failure)
 
         try:
             from airflow.models import Variable
             return Variable.get(key)
+        
         except Exception as failure:
             failures.append(failure)
 
