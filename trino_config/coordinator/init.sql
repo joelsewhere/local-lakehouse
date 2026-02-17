@@ -1,0 +1,4 @@
+-- CREATE SCHEMA raw.lunch_money WITH (LOCATION = 's3://local-lakehouse/raw/lunch_money');
+-- CREATE SCHEMA entities.staging WITH (LOCATION = 's3://local-lakehouse/entities/staging');
+-- CREATE SCHEMA entities.curated WITH (LOCATION = 's3://local-lakehouse/entities/curated');
+-- CREATE SCHEMA raw.curated WITH (LOCATION = 's3://local-lakehouse/raw/curated');

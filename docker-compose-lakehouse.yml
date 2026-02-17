@@ -1,0 +1,105 @@
+services:
+
+  polaris:
+    image: apache/polaris:latest
+    container_name: polaris
+    platform: linux/amd64
+    ports:
+      - "8181:8181"
+      - "8182:8182"
+    networks:
+      - local-iceberg-lakehouse
+    environment:
+      AWS_ACCESS_KEY_ID: admin
+      AWS_SECRET_ACCESS_KEY: password
+      AWS_REGION: dummy-region
+      AWS_ENDPOINT_URL_S3: http://minio:9000
+      AWS_ENDPOINT_URL_STS: http://minio:9000
+      POLARIS_BOOTSTRAP_CREDENTIALS: default-realm,root,secret
+      polaris.features.DROP_WITH_PURGE_ENABLED: true # allow dropping tables from the SQL client
+      polaris.realm-context.realms: default-realm
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:8181/healthcheck"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
+  trino-coordinator:
+    image: trinodb/trino:476
+    container_name: trino-coordinator
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./trino_config/coordinator/config.properties:/etc/trino/config.properties
+      - ./trino_config/catalog:/etc/trino/catalog
+      - ./trino_config/coordinator/init.sql:/etc/trino/init.sql
+    networks:
+      - local-iceberg-lakehouse
+
+  trino-worker-1:
+    image: trinodb/trino:476
+    container_name: trino-worker-1
+    volumes:
+      - ./trino_config/worker/config.properties:/etc/trino/config.properties
+      - ./trino_config/catalog:/etc/trino/catalog
+    depends_on:
+      - trino-coordinator
+    networks:
+      - local-iceberg-lakehouse
+
+  trino-worker-2:
+    image: trinodb/trino:476
+    container_name: trino-worker-2
+    volumes:
+      - ./trino_config/worker/config.properties:/etc/trino/config.properties
+      - ./trino_config/catalog:/etc/trino/catalog
+    depends_on:
+      - trino-coordinator
+    networks:
+      - local-iceberg-lakehouse
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    environment:
+      AWS_ACCESS_KEY_ID: admin
+      AWS_SECRET_ACCESS_KEY: password
+      AWS_REGION: dummy-region
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password
+      MINIO_DOMAIN: minio
+    networks:
+      local-iceberg-lakehouse:
+        aliases:
+          - warehouse.minio
+    ports:
+      - "9001:9001"
+      - "9000:9000"
+    command: ["server", "/data", "--console-address", ":9001"]
+
+  minio-client:
+    image: minio/mc:latest
+    container_name: minio-client
+    depends_on:
+      - minio
+    networks:
+      - local-iceberg-lakehouse
+    volumes:
+      - ./object_storage:/tmp
+    environment:
+      AWS_ACCESS_KEY_ID: admin
+      AWS_SECRET_ACCESS_KEY: password
+      AWS_REGION: dummy-region
+    entrypoint: >
+      /bin/sh -c "
+      until (mc alias set minio http://minio:9000 admin password) do echo '...waiting...' && sleep 1; done;
+      mc rm -r --force minio/warehouse;
+      mc mb minio/warehouse;
+      mc anonymous set public minio/warehouse;
+      tail -f /dev/null
+      " 
+   
+networks:
+  local-iceberg-lakehouse:
+    external: true
+    name: local-iceberg-lakehouse

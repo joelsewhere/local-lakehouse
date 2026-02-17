@@ -1,0 +1,4 @@
+{"timestamp":"2026-02-17T08:44:10.868397Z","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager","filename":"manager.py","lineno":179}
+{"timestamp":"2026-02-17T08:44:10.869748Z","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/test_database.py","logger":"airflow.models.dagbag.BundleDagBag","filename":"dagbag.py","lineno":593}
+{"timestamp":"2026-02-17T08:44:10.927973Z","level":"info","event":"Executing: create schema if not exists api.example;","logger":"airflow.task.operators.airflow.providers.common.sql.operators.sql.SQLExecuteQueryOperator","filename":"sql.py","lineno":394}
+{"timestamp":"2026-02-17T08:44:10.952671Z","level":"info","event":"Running statement: create schema if not exists api.example, parameters: None","logger":"airflow.task.hooks.airflow.providers.trino.hooks.trino.TrinoHook","filename":"sql.py","lineno":829}
