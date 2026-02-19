@@ -62,10 +62,10 @@ stop_services() {
     # Stop services in reverse order (Airflow -> Trino -> Lake)
     # The -v flag removes associated volumes to ensure clean shutdown
     echo "Stopping Airflow services..."
-    docker compose -f docker-compose-orchestrator.yml down -v
+    docker compose -f docker-compose-orchestrator.yml down
     
     echo "Stopping lakehouse services..."
-    docker compose -f docker-compose-lakehouse.yml down -v
+    docker compose -f docker-compose-lakehouse.yml down
 
     echo "Dropping trino/superset network..."
     docker network rm local-iceberg-lakehouse

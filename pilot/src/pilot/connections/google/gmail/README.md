@@ -1,0 +1,1 @@
+https://www.directedignorance.com/blog/gmail-with-python

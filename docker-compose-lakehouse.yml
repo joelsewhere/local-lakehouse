@@ -1,9 +1,48 @@
 services:
 
+  polaris_postgres:
+    image: postgres:16
+    container_name: polaris_postgres
+    environment:
+      POSTGRES_USER: polaris
+      POSTGRES_PASSWORD: polaris
+      POSTGRES_DB: polaris
+    volumes:
+      - ./polaris_postgres:/var/lib/postgresql/data
+    networks:
+      - local-iceberg-lakehouse
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U polaris"]
+      interval: 5s
+      retries: 5
+
+  polaris_bootstrap:
+    image: apache/polaris-admin-tool:latest
+    container_name: polaris-bootstrap
+    platform: linux/amd64
+    depends_on:
+      polaris_postgres:
+        condition: service_healthy
+    networks:
+      - local-iceberg-lakehouse
+    environment:
+      POLARIS_PERSISTENCE_TYPE: relational-jdbc
+      QUARKUS_DATASOURCE_DB_KIND: postgresql
+      QUARKUS_DATASOURCE_USERNAME: polaris
+      QUARKUS_DATASOURCE_PASSWORD: polaris
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://polaris_postgres:5432/polaris
+    command: ["bootstrap", "--realm", "default-realm", "--credential", "default-realm,root,secret"]
+    restart: "no"
+
   polaris:
     image: apache/polaris:latest
     container_name: polaris
     platform: linux/amd64
+    depends_on:
+      polaris_postgres:
+        condition: service_healthy
+      polaris_bootstrap:
+        condition: service_completed_successfully
     ports:
       - "8181:8181"
       - "8182:8182"
@@ -18,6 +57,11 @@ services:
       POLARIS_BOOTSTRAP_CREDENTIALS: default-realm,root,secret
       polaris.features.DROP_WITH_PURGE_ENABLED: true # allow dropping tables from the SQL client
       polaris.realm-context.realms: default-realm
+      POLARIS_PERSISTENCE_TYPE: relational-jdbc
+      QUARKUS_DATASOURCE_DB_KIND: postgresql
+      QUARKUS_DATASOURCE_USERNAME: polaris
+      QUARKUS_DATASOURCE_PASSWORD: polaris
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://polaris_postgres:5432/polaris
     healthcheck:
       test: ["CMD", "curl", "http://localhost:8181/healthcheck"]
       interval: 5s
@@ -68,6 +112,8 @@ services:
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: password
       MINIO_DOMAIN: minio
+    volumes:
+      - ./object_storage:/data   
     networks:
       local-iceberg-lakehouse:
         aliases:
@@ -84,8 +130,6 @@ services:
       - minio
     networks:
       - local-iceberg-lakehouse
-    volumes:
-      - ./object_storage:/tmp
     environment:
       AWS_ACCESS_KEY_ID: admin
       AWS_SECRET_ACCESS_KEY: password
@@ -93,7 +137,6 @@ services:
     entrypoint: >
       /bin/sh -c "
       until (mc alias set minio http://minio:9000 admin password) do echo '...waiting...' && sleep 1; done;
-      mc rm -r --force minio/warehouse;
       mc mb minio/warehouse;
       mc anonymous set public minio/warehouse;
       tail -f /dev/null
