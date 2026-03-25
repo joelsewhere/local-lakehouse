@@ -269,3 +269,88 @@ Plug in a new drive — it appears in the admin portal. Seal it, unplug it, put 
 | Node network | WireGuard / Tailscale |
 | Postgres HA | CloudNativePG |
 | Primary languages | Python, SQL, TypeScript |
+
+```mermaid
+flowchart LR
+    subgraph EXT["External"]
+        FED["Fediverse"]
+        HEALTH["Health APIs"]
+        WEAR["Wearables"]
+        PLUG["Plugins"]
+    end
+
+    subgraph INGRESS["Ingress"]
+        CF["Cloudflare\nTunnel"]
+        CADDY["Caddy"]
+        AUTH["Authentik\nSSO"]
+    end
+
+    subgraph APPS["Applications — 9 subdomains"]
+        FILES["files.·"]
+        DATA["data.·"]
+        SOCIAL["social.·"]
+        ADMIN["admin.·"]
+        FORMS["forms.·"]
+        CAL["calendar.·"]
+        WORK["workflows.·"]
+        WORKERS["other.·"]
+        MSG["mail.·"]
+    end
+
+    subgraph SVC["Platform services"]
+        AP["ActivityPub"]
+        ALG["Algorithms\nSQL · WASM · LLM"]
+        AIRFLOW["Airflow"]
+        PLUGINS["Plugin loader"]
+        ROUTER["Storage router"]
+        CONDUIT["Conduit\nMatrix"]
+        COOLIFY["Coolify"]
+        RAD["Radicale\nCalDAV"]
+    end
+
+    subgraph STORE["Storage"]
+        DUCKDB["DuckDB +\nDelta Lake"]
+        HOT["RustFS hot\n3-node erasure"]
+        WARM["RustFS warm\nstandalone"]
+        ARCH["RustFS archive\nsealed drives"]
+        PG["Postgres HA"]
+    end
+
+    FED <-->|federation| AP
+    HEALTH --> AIRFLOW
+    WEAR --> AIRFLOW
+    PLUG --> PLUGINS
+
+    CF --> CADDY --> AUTH --> APPS
+
+    SOCIAL --> AP
+    SOCIAL --> ALG
+    SOCIAL --> PLUGINS
+    FILES --> ROUTER
+    DATA --> DUCKDB
+    ADMIN --> AIRFLOW
+    ADMIN --> AUTH
+    ADMIN --> CADDY
+    ADMIN --> ROUTER
+    FORMS --> AIRFLOW
+    CAL --> RAD
+    WORK --> AIRFLOW
+    WORKERS --> COOLIFY
+    MSG --> CONDUIT
+
+    AP --> AIRFLOW
+    ALG --> AIRFLOW
+    AIRFLOW --> DUCKDB
+    ROUTER --> HOT
+    ROUTER --> WARM
+    ROUTER --> ARCH
+    CONDUIT --> PG
+    COOLIFY --> CADDY
+    RAD --> DUCKDB
+    AUTH --> PG
+    AIRFLOW --> PG
+
+    DUCKDB <--> HOT
+    HOT -.->|tiering| WARM
+    WARM -.->|seal| ARCH
+```
