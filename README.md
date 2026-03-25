@@ -270,6 +270,8 @@ Plug in a new drive — it appears in the admin portal. Seal it, unplug it, put 
 | Postgres HA | CloudNativePG |
 | Primary languages | Python, SQL, TypeScript |
 
+## System Graph
+
 ```mermaid
 flowchart LR
     subgraph EXT["External"]
